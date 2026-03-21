@@ -124,6 +124,16 @@ interface AIAPICallError extends Error {
   url?: string;
 }
 
+interface ErrorLikeRecord {
+  message?: unknown;
+  details?: unknown;
+  hint?: unknown;
+  code?: unknown;
+  status?: unknown;
+  statusCode?: unknown;
+  error_description?: unknown;
+}
+
 /**
  * 从 responseBody 中提取错误消息
  * 支持 SSE 格式和 JSON 格式
@@ -182,6 +192,50 @@ export function getErrorMessage(error: unknown): string {
 
     return error.message;
   }
+
+  if (error && typeof error === "object") {
+    const errorLike = error as ErrorLikeRecord;
+    const parts: string[] = [];
+
+    const primaryMessage =
+      typeof errorLike.message === "string" && errorLike.message.trim()
+        ? errorLike.message.trim()
+        : typeof errorLike.error_description === "string" && errorLike.error_description.trim()
+          ? errorLike.error_description.trim()
+          : null;
+
+    if (primaryMessage) {
+      parts.push(primaryMessage);
+    }
+
+    if (typeof errorLike.details === "string" && errorLike.details.trim()) {
+      parts.push(`details=${errorLike.details.trim()}`);
+    }
+
+    if (typeof errorLike.hint === "string" && errorLike.hint.trim()) {
+      parts.push(`hint=${errorLike.hint.trim()}`);
+    }
+
+    if (typeof errorLike.code === "string" && errorLike.code.trim()) {
+      parts.push(`code=${errorLike.code.trim()}`);
+    }
+
+    const statusValue =
+      typeof errorLike.statusCode === "number"
+        ? errorLike.statusCode
+        : typeof errorLike.status === "number"
+          ? errorLike.status
+          : null;
+
+    if (statusValue !== null) {
+      parts.unshift(`[${statusValue}]`);
+    }
+
+    if (parts.length > 0) {
+      return parts.join(" ");
+    }
+  }
+
   if (typeof error === "string") {
     return error;
   }
