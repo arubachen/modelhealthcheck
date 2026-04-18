@@ -827,11 +827,11 @@ export function DashboardView({
           <h1
             className={cn(
               "max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl",
-              embeddedMode ? "max-w-xl text-2xl sm:text-4xl md:text-5xl" : undefined
+              embeddedMode ? "max-w-lg text-2xl sm:text-4xl md:text-5xl" : undefined
             )}
           >
-            {siteSettings.heroTitlePrimary} <br />
-            <span className="text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
+            <span className="block">{siteSettings.heroTitlePrimary}</span>
+            <span className="block text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
           </h1>
 
           <div
@@ -848,13 +848,13 @@ export function DashboardView({
           className={cn(
             "flex items-start gap-3 sm:gap-4",
             embeddedMode
-              ? "w-full flex-row flex-wrap lg:max-w-[44rem] lg:justify-end"
+              ? "w-full flex-row flex-wrap items-center lg:max-w-[50rem] lg:justify-end"
               : "flex-col lg:items-end"
           )}
         >
            {/* Search Box - only show when multiple groups exist */}
            {hasMultipleGroups && (
-             <div className={cn("relative", embeddedMode ? "w-full sm:w-72 lg:w-80" : "w-full sm:w-64")}>
+             <div className={cn("relative", embeddedMode ? "w-full sm:w-[18rem] lg:w-[20rem]" : "w-full sm:w-64")}>
                <input
                  type="text"
                  placeholder="搜索分组..."
@@ -876,17 +876,6 @@ export function DashboardView({
                  </button>
                )}
              </div>
-           )}
-
-           {embeddedMode && (
-             <Link
-               href="/admin"
-               target="_blank"
-               className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
-             >
-               <span>管理后台</span>
-               <ExternalLink className="h-3.5 w-3.5" />
-             </Link>
            )}
 
            {/* Tag Filter - only show when multiple groups and tags exist */}
@@ -925,16 +914,16 @@ export function DashboardView({
 
            {/* Sort Mode Selector */}
            {hasMultipleGroups && (
-             <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+             <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
                <span className="pl-1">排序</span>
-               <div className="flex items-center gap-1 rounded-full bg-muted/30 p-0.5">
+               <div className="flex h-8 items-center gap-1 rounded-full bg-muted/30 p-0.5">
                  {SORT_OPTIONS.map((option) => (
                    <button
                      key={option.value}
                      type="button"
                      onClick={() => setSortMode(option.value)}
                      className={cn(
-                       "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                       "inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold transition-colors",
                        sortMode === option.value
                          ? "bg-foreground text-background"
                          : "text-muted-foreground hover:text-foreground"
@@ -947,16 +936,16 @@ export function DashboardView({
              </div>
            )}
 
-           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+           <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
              <span className="pl-1">可用性区间</span>
-             <div className="flex items-center gap-1 rounded-full bg-muted/30 p-0.5">
+             <div className="flex h-8 items-center gap-1 rounded-full bg-muted/30 p-0.5">
                {PERIOD_OPTIONS.map((option) => (
                  <button
                    key={option.value}
                    type="button"
                    onClick={() => setSelectedPeriod(option.value)}
                    className={cn(
-                     "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                     "inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold transition-colors",
                      selectedPeriod === option.value
                        ? "bg-foreground text-background"
                        : "text-muted-foreground hover:text-foreground"
@@ -969,7 +958,7 @@ export function DashboardView({
            </div>
 
            {/* Status Pill */}
-           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 py-1.5 backdrop-blur-sm">
+           <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 backdrop-blur-sm">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
@@ -977,8 +966,24 @@ export function DashboardView({
               <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
            </div>
 
+           {embeddedMode && (
+             <Link
+               href="/admin"
+               target="_blank"
+               className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
+             >
+               <span>管理后台</span>
+               <ExternalLink className="h-3.5 w-3.5" />
+             </Link>
+           )}
+
            {lastUpdated && (
-             <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+             <div
+               className={cn(
+                 "flex items-center gap-3 text-xs font-medium text-muted-foreground",
+                 embeddedMode ? "w-full justify-end" : undefined
+               )}
+             >
                 <div className="flex items-center gap-1.5">
                   <RefreshCcw className={cn("h-3 w-3", isRefreshing && "animate-spin")} />
                   <span>更新于 <ClientTime value={lastUpdated} /></span>
