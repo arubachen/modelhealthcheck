@@ -37,13 +37,15 @@ export default async function Home({searchParams}: HomePageProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-background/60 px-3 py-1 text-xs text-muted-foreground shadow-sm transition hover:border-border/80 hover:text-foreground"
-            >
-              <span className="font-medium opacity-70">Console</span>
-              <span>Admin</span>
-            </Link>
+            {!embeddedMode && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-background/60 px-3 py-1 text-xs text-muted-foreground shadow-sm transition hover:border-border/80 hover:text-foreground"
+              >
+                <span className="font-medium opacity-70">Console</span>
+                <span>Admin</span>
+              </Link>
+            )}
             <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-background/60 px-3 py-1 text-xs text-muted-foreground shadow-sm transition hover:border-border/80 hover:text-foreground">
               <span className="font-medium opacity-70">Ver.</span>
               <span className="font-mono">{ESTIMATED_VERSION}</span>

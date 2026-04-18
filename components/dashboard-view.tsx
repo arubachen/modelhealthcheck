@@ -878,6 +878,17 @@ export function DashboardView({
              </div>
            )}
 
+           {embeddedMode && (
+             <Link
+               href="/admin"
+               target="_blank"
+               className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
+             >
+               <span>管理后台</span>
+               <ExternalLink className="h-3.5 w-3.5" />
+             </Link>
+           )}
+
            {/* Tag Filter - only show when multiple groups and tags exist */}
            {hasMultipleGroups && allTags.length > 0 && (
              <div className={cn("flex flex-wrap items-center gap-2", embeddedMode ? "w-full lg:justify-end" : undefined)}>
