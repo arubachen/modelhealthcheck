@@ -4,10 +4,8 @@ import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {fetchWithCache, prefetchDashboardData, setCache} from "@/lib/core/frontend-cache";
 import {prefetchGroupData} from "@/lib/core/group-frontend-cache";
 import Link from "next/link";
-import {useSearchParams} from "next/navigation";
 import {
   Activity,
-  ChevronRight,
   ChevronDown,
   ExternalLink,
   Github,
@@ -218,7 +216,6 @@ function GroupPanel({
   dragHandleProps,
 }: GroupPanelProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const searchParams = useSearchParams();
 
   const statusSummary = useMemo(() => {
     const counts = { operational: 0, degraded: 0, failed: 0, validation_failed: 0, maintenance: 0, error: 0 };
@@ -230,23 +227,6 @@ function GroupPanel({
     }
     return counts;
   }, [group.timelines]);
-
-  const groupLink = useMemo(() => {
-    const path = `/group/${encodeURIComponent(group.groupName)}`;
-    const embeddedMode = searchParams.get("ui_mode") === "embedded";
-    if (!embeddedMode) {
-      return path;
-    }
-    const nextParams = new URLSearchParams();
-    for (const key of ["ui_mode", "theme", "src_host"]) {
-      const value = searchParams.get(key);
-      if (value) {
-        nextParams.set(key, value);
-      }
-    }
-    const query = nextParams.toString();
-    return query ? `${path}?${query}` : path;
-  }, [group.groupName, searchParams]);
 
   return (
     <Collapsible
@@ -321,13 +301,6 @@ function GroupPanel({
           </div>
         </CollapsibleTrigger>
         
-        <Link
-            href={groupLink}
-            className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-sm font-medium text-background transition-all hover:bg-foreground/90 sm:h-10 sm:w-auto sm:gap-2 sm:px-5 sm:hover:px-6"
-        >
-            <span className="hidden whitespace-nowrap sm:inline">详情</span>
-            <ChevronRight className="h-3.5 w-3.5 opacity-80" />
-        </Link>
       </div>
 
       <CollapsibleContent className="animate-in fade-in-0 slide-in-from-top-2">
@@ -862,74 +835,65 @@ export function DashboardView({
             embeddedMode ? "w-full" : "items-start lg:items-end"
           )}
         >
-          {hasMultipleGroups && (
-            <div
-              className={cn(
-                "flex flex-col gap-3",
-                embeddedMode ? "w-full" : "w-full sm:w-auto"
-              )}
-            >
-              <div className={cn("flex flex-wrap items-center gap-3", !embeddedMode && "justify-end")}>
-                <div className={cn("relative", embeddedMode ? "w-full sm:w-[18rem] lg:w-[20rem]" : "w-full sm:w-64")}>
-                  <input
-                    type="text"
-                    placeholder="搜索分组..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-10 w-full rounded-full border border-border/60 bg-background/50 pl-10 pr-10 text-sm backdrop-blur-sm transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                  <Search
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                  />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {allTags.length > 0 && (
-                <div className={cn("flex flex-wrap items-center gap-2", !embeddedMode && "justify-end")}>
-                  {allTags.map((tag) => {
-                    const isSelected = selectedTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleTag(tag)}
-                        className={cn(
-                          "rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                          isSelected
-                            ? cn(getTagColorClass(tag), "ring-2 ring-foreground/20")
-                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                        )}
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                  {selectedTags.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTags([])}
-                      className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                      清除
-                    </button>
-                  )}
-                </div>
+          {hasMultipleGroups && allTags.length > 0 && (
+            <div className={cn("flex flex-wrap items-center gap-2", embeddedMode ? "w-full justify-start lg:justify-end" : "justify-end")}>
+              {allTags.map((tag) => {
+                const isSelected = selectedTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                      isSelected
+                        ? cn(getTagColorClass(tag), "ring-2 ring-foreground/20")
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+              {selectedTags.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedTags([])}
+                  className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                  清除
+                </button>
               )}
             </div>
           )}
 
           <div className={cn("flex flex-wrap items-center gap-3", embeddedMode ? "w-full justify-start lg:justify-end" : "justify-end")}>
+            {hasMultipleGroups && (
+              <div className={cn("relative", embeddedMode ? "w-full sm:w-[18rem] lg:w-[20rem]" : "w-full sm:w-64")}>
+                <input
+                  type="text"
+                  placeholder="搜索分组..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-10 w-full rounded-full border border-border/60 bg-background/50 pl-10 pr-10 text-sm backdrop-blur-sm transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+
             {hasMultipleGroups && (
               <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
                 <span className="pl-1">排序</span>
