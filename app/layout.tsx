@@ -4,6 +4,7 @@ import "@/lib/core/poller";
 import NextTopLoader from "nextjs-toploader";
 import {ThemeProvider} from "@/components/theme-provider";
 import {NotificationBanner} from "@/components/notification-banner";
+import {EmbeddedThemeBridge} from "@/components/embedded-theme-bridge";
 import {loadSiteSettings} from "@/lib/site-settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,9 +23,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const themeBootScript = `(()=>{
+  const root = document.documentElement;
+  const params = new URLSearchParams(window.location.search);
+  const embeddedTheme = params.get('ui_mode') === 'embedded' ? params.get('theme') : null;
+  if (embeddedTheme === 'dark' || embeddedTheme === 'light') {
+    const isDark = embeddedTheme === 'dark';
+    root.classList.toggle('dark', isDark);
+    root.style.colorScheme = isDark ? 'dark' : 'light';
+    return;
+  }
   const hour = new Date().getHours();
   const isDark = hour >= 19 || hour < 7;
-  const root = document.documentElement;
   root.classList.toggle('dark', isDark);
   root.style.colorScheme = isDark ? 'dark' : 'light';
 })();`;
@@ -50,6 +59,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <EmbeddedThemeBridge />
           <NotificationBanner />
           {children}
         </ThemeProvider>
