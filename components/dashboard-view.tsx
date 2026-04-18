@@ -988,6 +988,15 @@ export function DashboardView({
               <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
            </div>
 
+           {embeddedMode && (
+             <Link
+               href="/admin"
+               className="inline-flex h-10 items-center rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
+             >
+               管理后台
+             </Link>
+           )}
+
            {lastUpdated && (
              <div
                className={cn(

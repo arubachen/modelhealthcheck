@@ -1,6 +1,7 @@
 "use client";
 
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import Link from "next/link";
 import {Activity, ExternalLink, RefreshCcw} from "lucide-react";
 
 import {GroupTags} from "@/components/group-tags";
@@ -265,7 +266,7 @@ export function GroupDashboardView({
               {displayName}
             </h1>
             <GroupTags tags={data.tags} />
-            {data.websiteUrl && (
+            {!embeddedMode && data.websiteUrl && (
               <a
                 href={data.websiteUrl}
                 target="_blank"
@@ -349,6 +350,15 @@ export function GroupDashboardView({
               </span>
               <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
            </div>
+
+           {embeddedMode && (
+             <Link
+               href="/admin"
+               className="inline-flex h-10 items-center rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
+             >
+               管理后台
+             </Link>
+           )}
 
            {lastUpdated && (
              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
