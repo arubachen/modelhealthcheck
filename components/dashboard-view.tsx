@@ -819,12 +819,12 @@ export function DashboardView({
 
       <header
         className={cn(
-          "relative z-10 flex flex-col justify-between gap-6 sm:gap-8 lg:flex-row",
-          embeddedMode ? "mb-6 lg:items-start" : "mb-8 sm:mb-12 lg:items-end"
+          "relative z-10 flex flex-col justify-between gap-6 sm:gap-8",
+          embeddedMode ? "mb-4" : "mb-8 sm:mb-12 lg:flex-row lg:items-end"
         )}
       >
-        <div className={cn("space-y-4", embeddedMode ? "max-w-2xl" : undefined)}>
-          {!embeddedMode && (
+        {!embeddedMode && (
+          <div className="space-y-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background sm:h-8 sm:w-8">
                 <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -844,187 +844,182 @@ export function DashboardView({
               <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
               <ThemeToggle />
             </div>
-          )}
 
-          <h1
-            className={cn(
-              "max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl",
-              embeddedMode ? "max-w-lg text-2xl sm:text-4xl md:text-5xl" : undefined
-            )}
-          >
-            <span className="block">{siteSettings.heroTitlePrimary}</span>
-            <span className="block text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
-          </h1>
+            <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+              <span className="block">{siteSettings.heroTitlePrimary}</span>
+              <span className="block text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
+            </h1>
 
-          <div
-            className={cn(
-              "flex max-w-lg flex-col gap-2 text-sm text-muted-foreground sm:text-base",
-              embeddedMode ? "max-w-xl text-xs sm:text-sm" : undefined
-            )}
-          >
-            <p className="whitespace-pre-line leading-relaxed">{siteSettings.heroDescription}</p>
+            <div className="flex max-w-lg flex-col gap-2 text-sm text-muted-foreground sm:text-base">
+              <p className="whitespace-pre-line leading-relaxed">{siteSettings.heroDescription}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div
           className={cn(
-            "flex items-start gap-3 sm:gap-4",
-            embeddedMode
-              ? "w-full flex-row flex-wrap items-center lg:max-w-[50rem] lg:justify-end"
-              : "flex-col lg:items-end"
+            "flex flex-col gap-3 sm:gap-4",
+            embeddedMode ? "w-full" : "items-start lg:items-end"
           )}
         >
-           {/* Search Box - only show when multiple groups exist */}
-           {hasMultipleGroups && (
-             <div className={cn("relative", embeddedMode ? "w-full sm:w-[18rem] lg:w-[20rem]" : "w-full sm:w-64")}>
-               <input
-                 type="text"
-                 placeholder="搜索分组..."
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 className="h-10 w-full rounded-full border border-border/60 bg-background/50 pl-10 pr-10 text-sm backdrop-blur-sm transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
-               />
-               <Search
-                 aria-hidden="true"
-                 className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-               />
-               {searchQuery && (
-                 <button
-                   type="button"
-                   onClick={() => setSearchQuery("")}
-                   className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                 >
-                   <X className="h-4 w-4" />
-                 </button>
-               )}
-             </div>
-           )}
+          {hasMultipleGroups && (
+            <div
+              className={cn(
+                "flex flex-col gap-3",
+                embeddedMode ? "w-full" : "w-full sm:w-auto"
+              )}
+            >
+              <div className={cn("flex flex-wrap items-center gap-3", !embeddedMode && "justify-end")}>
+                <div className={cn("relative", embeddedMode ? "w-full sm:w-[18rem] lg:w-[20rem]" : "w-full sm:w-64")}>
+                  <input
+                    type="text"
+                    placeholder="搜索分组..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-10 w-full rounded-full border border-border/60 bg-background/50 pl-10 pr-10 text-sm backdrop-blur-sm transition-colors placeholder:text-muted-foreground/60 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <Search
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-           {/* Tag Filter - only show when multiple groups and tags exist */}
-           {hasMultipleGroups && allTags.length > 0 && (
-             <div className={cn("flex flex-wrap items-center gap-2", embeddedMode ? "w-full lg:justify-end" : undefined)}>
-               {allTags.map((tag) => {
-                 const isSelected = selectedTags.includes(tag);
-                 return (
-                   <button
-                     key={tag}
-                     type="button"
-                     onClick={() => toggleTag(tag)}
-                     className={cn(
-                       "rounded-full px-3 py-1 text-xs font-semibold transition-all",
-                       isSelected
-                         ? cn(getTagColorClass(tag), "ring-2 ring-foreground/20")
-                         : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                     )}
-                   >
-                     {tag}
-                   </button>
-                 );
-               })}
-               {selectedTags.length > 0 && (
-                 <button
-                   type="button"
-                   onClick={() => setSelectedTags([])}
-                   className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                 >
-                   <X className="h-3 w-3" />
-                   清除
-                 </button>
-               )}
-             </div>
-           )}
+              {allTags.length > 0 && (
+                <div className={cn("flex flex-wrap items-center gap-2", !embeddedMode && "justify-end")}>
+                  {allTags.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "rounded-full px-3 py-1 text-xs font-semibold transition-all",
+                          isSelected
+                            ? cn(getTagColorClass(tag), "ring-2 ring-foreground/20")
+                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                  {selectedTags.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTags([])}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                      清除
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
-           {/* Sort Mode Selector */}
-           {hasMultipleGroups && (
-             <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
-               <span className="pl-1">排序</span>
-               <div className="flex h-8 items-center gap-1 rounded-full bg-muted/30 p-0.5">
-                 {SORT_OPTIONS.map((option) => (
-                   <button
-                     key={option.value}
-                     type="button"
-                     onClick={() => setSortMode(option.value)}
-                     className={cn(
-                       "inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold transition-colors",
-                       sortMode === option.value
-                         ? "bg-foreground text-background"
-                         : "text-muted-foreground hover:text-foreground"
-                     )}
-                   >
-                     {option.label}
-                   </button>
-                 ))}
-               </div>
-             </div>
-           )}
+          <div className={cn("flex flex-wrap items-center gap-3", embeddedMode ? "w-full justify-start lg:justify-end" : "justify-end")}>
+            {hasMultipleGroups && (
+              <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
+                <span className="pl-1">排序</span>
+                <div className="flex h-8 items-center gap-1 rounded-full bg-muted/30 p-0.5">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setSortMode(option.value)}
+                      className={cn(
+                        "inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold transition-colors",
+                        sortMode === option.value
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-           <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
-             <span className="pl-1">可用性区间</span>
-             <div className="flex h-8 items-center gap-1 rounded-full bg-muted/30 p-0.5">
-               {PERIOD_OPTIONS.map((option) => (
-                 <button
-                   key={option.value}
-                   type="button"
-                   onClick={() => setSelectedPeriod(option.value)}
-                   className={cn(
-                     "inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold transition-colors",
-                     selectedPeriod === option.value
-                       ? "bg-foreground text-background"
-                       : "text-muted-foreground hover:text-foreground"
-                   )}
-                 >
-                   {option.label}
-                 </button>
-               ))}
-             </div>
-           </div>
+            <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-3 text-xs font-semibold text-muted-foreground">
+              <span className="pl-1">可用性区间</span>
+              <div className="flex h-8 items-center gap-1 rounded-full bg-muted/30 p-0.5">
+                {PERIOD_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedPeriod(option.value)}
+                    className={cn(
+                      "inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold transition-colors",
+                      selectedPeriod === option.value
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-           {/* Status Pill */}
-           <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 backdrop-blur-sm">
+            <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 backdrop-blur-sm">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
               </span>
               <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
-           </div>
+            </div>
 
-           {embeddedMode && (
-             <Link
-               href="/admin"
-               className="inline-flex h-10 items-center rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
-             >
-               管理后台
-             </Link>
-           )}
-
-           {lastUpdated && (
-             <div
-               className={cn(
-                 "flex items-center gap-3 text-xs font-medium text-muted-foreground",
-                 embeddedMode ? "w-full justify-end" : undefined
-               )}
-             >
-                <div className="flex items-center gap-1.5">
-                  <RefreshCcw className={cn("h-3 w-3", isRefreshing && "animate-spin")} />
-                  <span>更新于 <ClientTime value={lastUpdated} /></span>
-                </div>
-                <span className="opacity-30">|</span>
-                <span>{pollIntervalLabel} 轮询</span>
-                {canForceRefresh ? (
-                  <button
-                    type="button"
-                    onClick={() => refresh(selectedPeriod, true)}
-                    disabled={isRefreshing}
-                    className={cn(
-                      "rounded-full border border-border/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground",
-                      isRefreshing && "cursor-not-allowed opacity-60"
-                    )}
-                  >
-                    刷新
-                  </button>
-                ) : null}
-              </div>
+            {embeddedMode && (
+              <Link
+                href="/admin"
+                className="inline-flex h-10 items-center rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
+              >
+                管理后台
+              </Link>
             )}
+          </div>
+
+          {lastUpdated && (
+            <div
+              className={cn(
+                "flex flex-wrap items-center gap-3 text-xs font-medium text-muted-foreground",
+                embeddedMode ? "w-full justify-start lg:justify-end" : "justify-end"
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <RefreshCcw className={cn("h-3 w-3", isRefreshing && "animate-spin")} />
+                <span>更新于 <ClientTime value={lastUpdated} /></span>
+              </div>
+              <span className="opacity-30">|</span>
+              <span>{pollIntervalLabel} 轮询</span>
+              {canForceRefresh ? (
+                <button
+                  type="button"
+                  onClick={() => refresh(selectedPeriod, true)}
+                  disabled={isRefreshing}
+                  className={cn(
+                    "rounded-full border border-border/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground",
+                    isRefreshing && "cursor-not-allowed opacity-60"
+                  )}
+                >
+                  刷新
+                </button>
+              ) : null}
+            </div>
+          )}
         </div>
       </header>
 
