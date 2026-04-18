@@ -72,6 +72,24 @@ function isLocalHost(hostname: string): boolean {
   return ["localhost", "127.0.0.1"].includes(hostname);
 }
 
+function shouldDisableSsl(url: URL): boolean {
+  if (isLocalHost(url.hostname)) {
+    return true;
+  }
+
+  const sslMode = url.searchParams.get("sslmode")?.trim().toLowerCase();
+  if (sslMode === "disable" || sslMode === "false" || sslMode === "0") {
+    return true;
+  }
+
+  const ssl = url.searchParams.get("ssl")?.trim().toLowerCase();
+  if (ssl === "disable" || ssl === "false" || ssl === "0") {
+    return true;
+  }
+
+  return false;
+}
+
 function getPool(connectionString: string): Pool {
   if (poolCache?.connectionString === connectionString) {
     return poolCache.pool;
@@ -80,7 +98,7 @@ function getPool(connectionString: string): Pool {
   const url = new URL(connectionString);
   const pool = new Pool({
     connectionString,
-    ssl: isLocalHost(url.hostname) ? false : {rejectUnauthorized: false},
+    ssl: shouldDisableSsl(url) ? false : {rejectUnauthorized: false},
   });
   poolCache = {
     connectionString,
@@ -236,6 +254,13 @@ export function createPostgresControlPlaneStorage(connectionString: string): Con
 
     const limitPerConfig = options?.limitPerConfig ?? 60;
     const params: Array<string[] | number> = [];
+    const limitPlaceholder =
+      typeof limitPerConfig === "number"
+        ? (() => {
+            params.push(limitPerConfig);
+            return `$${params.length}`;
+          })()
+        : null;
     const filterClause = normalizedIds
       ? (() => {
           params.push(normalizedIds);
@@ -243,10 +268,9 @@ export function createPostgresControlPlaneStorage(connectionString: string): Con
         })()
       : "";
     const limitClause =
-      typeof limitPerConfig === "number"
+      limitPlaceholder
         ? (() => {
-            params.unshift(limitPerConfig);
-            return `WHERE row_number <= $1`;
+            return `WHERE row_number <= ${limitPlaceholder}`;
           })()
         : "";
 

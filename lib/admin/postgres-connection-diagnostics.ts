@@ -19,8 +19,22 @@ function isLocalHost(hostname: string): boolean {
   return ["localhost", "127.0.0.1"].includes(hostname);
 }
 
-function getSslMode(hostname: string): "disable" | "require" {
-  return isLocalHost(hostname) ? "disable" : "require";
+function getSslMode(parsedUrl: URL): "disable" | "require" {
+  if (isLocalHost(parsedUrl.hostname)) {
+    return "disable";
+  }
+
+  const sslMode = parsedUrl.searchParams.get("sslmode")?.trim().toLowerCase();
+  if (sslMode === "disable" || sslMode === "false" || sslMode === "0") {
+    return "disable";
+  }
+
+  const ssl = parsedUrl.searchParams.get("ssl")?.trim().toLowerCase();
+  if (ssl === "disable" || ssl === "false" || ssl === "0") {
+    return "disable";
+  }
+
+  return "require";
 }
 
 function isAllowedProtocol(protocol: string): boolean {
@@ -117,7 +131,7 @@ export async function runPostgresConnectionDiagnostics(
   const host = parsedUrl.hostname || null;
   const port = parsedUrl.port || null;
   const database = parsedUrl.pathname.replace(/^\//, "") || null;
-  const sslMode = host ? getSslMode(host) : "unknown";
+  const sslMode = host ? getSslMode(parsedUrl) : "unknown";
   const checks: StorageDiagnosticCheck[] = [
     {
       id: "postgres-candidate-parse",
