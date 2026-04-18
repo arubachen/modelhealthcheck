@@ -12,6 +12,7 @@ export const revalidate = 0;
 
 interface GroupPageProps {
   params: Promise<{ groupName: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 // 生成页面元数据
@@ -26,9 +27,11 @@ export async function generateMetadata({ params }: GroupPageProps) {
   };
 }
 
-export default async function GroupPage({ params }: GroupPageProps) {
+export default async function GroupPage({ params, searchParams }: GroupPageProps) {
   const { groupName } = await params;
   const decodedGroupName = decodeURIComponent(groupName);
+  const query = searchParams ? await searchParams : {};
+  const embeddedMode = query.ui_mode === "embedded";
 
   const [availableGroups, adminSession] = await Promise.all([
     getAvailableGroups(),
@@ -39,20 +42,22 @@ export default async function GroupPage({ params }: GroupPageProps) {
   }
 
   return (
-    <div className="min-h-screen py-8 md:py-16">
+    <div className={embeddedMode ? "min-h-screen py-0" : "min-h-screen py-8 md:py-16"}>
       <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-3 sm:gap-8 sm:px-6 lg:px-12">
-        {/* 返回首页链接 */}
-        <Link
-          href="/"
-          className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border/40 bg-background/60 px-4 py-1.5 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border/80 hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          返回首页
-        </Link>
+        {!embeddedMode && (
+          <Link
+            href="/"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border/40 bg-background/60 px-4 py-1.5 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border/80 hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            返回首页
+          </Link>
+        )}
 
         <GroupDashboardBootstrap
           groupName={decodedGroupName}
           canForceRefresh={Boolean(adminSession)}
+          embeddedMode={embeddedMode}
         />
       </main>
     </div>

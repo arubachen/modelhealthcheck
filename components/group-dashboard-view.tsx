@@ -15,6 +15,7 @@ interface GroupDashboardViewProps {
   groupName: string;
   initialData: GroupDashboardData;
   canForceRefresh: boolean;
+  embeddedMode?: boolean;
 }
 
 /** 计算所有 Provider 中最近一次检查的时间戳（毫秒） */
@@ -68,6 +69,7 @@ export function GroupDashboardView({
   groupName,
   initialData,
   canForceRefresh,
+  embeddedMode = false,
 }: GroupDashboardViewProps) {
   const [data, setData] = useState(initialData);
   const [selectedPeriod, setSelectedPeriod] = useState<AvailabilityPeriod>(
@@ -231,21 +233,32 @@ export function GroupDashboardView({
 
   return (
     <div className="relative">
-      <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
-      <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
-      <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
-      <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
+      {!embeddedMode && (
+        <>
+          <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
+          <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
+          <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
+          <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
+        </>
+      )}
 
-      <header className="relative z-10 mb-8 flex flex-col justify-between gap-6 sm:mb-12 sm:gap-8 lg:flex-row lg:items-end">
+      <header
+        className={cn(
+          "relative z-10 flex flex-col justify-between gap-6 sm:gap-8 lg:flex-row",
+          embeddedMode ? "mb-6 lg:items-start" : "mb-8 sm:mb-12 lg:items-end"
+        )}
+      >
         <div className="space-y-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background sm:h-8 sm:w-8">
-              <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          {!embeddedMode && (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background sm:h-8 sm:w-8">
+                <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground sm:text-sm">
+                Group View
+              </span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground sm:text-sm">
-              Group View
-            </span>
-          </div>
+          )}
           
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">

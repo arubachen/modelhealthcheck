@@ -75,7 +75,7 @@ export function DashboardBootstrap({
   if (!data) {
     return (
       <div>
-        <DashboardSkeleton />
+        <DashboardSkeleton embeddedMode={embeddedMode} />
         {errorMessage && (
           <div className="mt-6 flex justify-center">
             <div className="inline-flex items-center gap-3 rounded-full border border-border/60 bg-background/60 px-4 py-2 text-sm text-muted-foreground">

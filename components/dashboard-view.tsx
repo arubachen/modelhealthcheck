@@ -789,11 +789,15 @@ export function DashboardView({
 
   return (
     <div className="relative">
-       {/* Corner decorative markers for the main container */}
-       <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
-       <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
-       <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
-       <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
+      {!embeddedMode && (
+        <>
+          {/* Corner decorative markers for the main container */}
+          <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
+          <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
+          <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
+          <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
+        </>
+      )}
 
       <header
         className={cn(
@@ -965,17 +969,6 @@ export function DashboardView({
               </span>
               <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
            </div>
-
-           {embeddedMode && (
-             <Link
-               href="/admin"
-               target="_blank"
-               className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 text-xs font-semibold text-muted-foreground backdrop-blur-sm transition-colors hover:border-border/80 hover:text-foreground"
-             >
-               <span>管理后台</span>
-               <ExternalLink className="h-3.5 w-3.5" />
-             </Link>
-           )}
 
            {lastUpdated && (
              <div

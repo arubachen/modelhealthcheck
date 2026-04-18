@@ -13,11 +13,13 @@ const DEFAULT_PERIOD: AvailabilityPeriod = "7d";
 interface GroupDashboardBootstrapProps {
   groupName: string;
   canForceRefresh: boolean;
+  embeddedMode?: boolean;
 }
 
 export function GroupDashboardBootstrap({
   groupName,
   canForceRefresh,
+  embeddedMode = false,
 }: GroupDashboardBootstrapProps) {
   const [data, setData] = useState<GroupDashboardData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export function GroupDashboardBootstrap({
   if (!data) {
     return (
       <div>
-        <GroupDashboardSkeleton />
+        <GroupDashboardSkeleton embeddedMode={embeddedMode} />
         {errorMessage && (
           <div className="mt-6 flex justify-center">
             <div className="inline-flex items-center gap-3 rounded-full border border-border/60 bg-background/60 px-4 py-2 text-sm text-muted-foreground">
@@ -104,6 +106,7 @@ export function GroupDashboardBootstrap({
       groupName={groupName}
       initialData={data}
       canForceRefresh={canForceRefresh}
+      embeddedMode={embeddedMode}
     />
   );
 }

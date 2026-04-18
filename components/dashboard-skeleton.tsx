@@ -114,24 +114,35 @@ function GroupPanelSkeleton({ cardCount = 3 }: { cardCount?: number }) {
   );
 }
 
-export function DashboardSkeleton() {
+export function DashboardSkeleton({ embeddedMode = false }: { embeddedMode?: boolean }) {
   return (
     <div className="relative animate-pulse">
-      <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
-      <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
-      <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
-      <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
+      {!embeddedMode && (
+        <>
+          <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
+          <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
+          <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
+          <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
+        </>
+      )}
 
-      <header className="relative z-10 mb-8 flex flex-col justify-between gap-6 sm:mb-12 sm:gap-8 lg:flex-row lg:items-end">
+      <header
+        className={cn(
+          "relative z-10 flex flex-col justify-between gap-6 sm:gap-8 lg:flex-row",
+          embeddedMode ? "mb-6 lg:items-start" : "mb-8 sm:mb-12 lg:items-end"
+        )}
+      >
         <div className="space-y-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <SkeletonBlock className="h-7 w-7 rounded-lg sm:h-8 sm:w-8" />
-            <SkeletonBlock className="h-3 w-24 sm:h-4 sm:w-28" />
-            <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
-            <SkeletonBlock className="h-3 w-16 sm:h-4 sm:w-20" />
-            <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
-            <SkeletonBlock className="h-7 w-7 rounded-full" />
-          </div>
+          {!embeddedMode && (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <SkeletonBlock className="h-7 w-7 rounded-lg sm:h-8 sm:w-8" />
+              <SkeletonBlock className="h-3 w-24 sm:h-4 sm:w-28" />
+              <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
+              <SkeletonBlock className="h-3 w-16 sm:h-4 sm:w-20" />
+              <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
+              <SkeletonBlock className="h-7 w-7 rounded-full" />
+            </div>
+          )}
 
           <div className="space-y-3">
             <SkeletonBlock className="h-10 w-72 sm:h-14 sm:w-[520px]" />
@@ -184,12 +195,17 @@ export function DashboardSkeleton() {
   );
 }
 
-export function GroupDashboardSkeleton() {
+export function GroupDashboardSkeleton({ embeddedMode = false }: { embeddedMode?: boolean }) {
   return (
     <div className="relative animate-pulse">
-      <header className="mb-8 flex flex-col justify-between gap-6 sm:mb-12 sm:gap-8 lg:flex-row lg:items-end">
+      <header
+        className={cn(
+          "flex flex-col justify-between gap-6 sm:gap-8 lg:flex-row",
+          embeddedMode ? "mb-6 lg:items-start" : "mb-8 sm:mb-12 lg:items-end"
+        )}
+      >
         <div className="space-y-4">
-          <SkeletonBlock className="h-4 w-28" />
+          {!embeddedMode && <SkeletonBlock className="h-4 w-28" />}
           <SkeletonBlock className="h-10 w-60" />
           <SkeletonBlock className="h-4 w-40" />
         </div>
