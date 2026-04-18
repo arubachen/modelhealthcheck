@@ -870,7 +870,7 @@ export function DashboardView({
 
           <div className={cn("flex flex-wrap items-center gap-3", embeddedMode ? "w-full justify-start lg:justify-end" : "justify-end")}>
             {hasMultipleGroups && (
-              <div className={cn("relative", embeddedMode ? "w-full sm:w-[18rem] lg:w-[20rem]" : "w-full sm:w-64")}>
+              <div className={cn("relative", embeddedMode ? "w-full sm:w-[16rem] lg:w-[18rem]" : "w-full sm:w-64")}>
                 <input
                   type="text"
                   placeholder="搜索分组..."
@@ -938,12 +938,11 @@ export function DashboardView({
               </div>
             </div>
 
-            <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/50 px-4 backdrop-blur-sm">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/50 backdrop-blur-sm">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
               </span>
-              <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
             </div>
 
             {embeddedMode && (
