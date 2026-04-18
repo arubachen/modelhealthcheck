@@ -762,7 +762,7 @@ export function DashboardView({
           gridColsClass,
           availabilityStats,
           selectedPeriod,
-          defaultOpen: false,
+          defaultOpen: embeddedMode,
         };
         // Only enable drag-and-drop in custom sort mode
         return isDndReady && sortMode === "custom" ? (
