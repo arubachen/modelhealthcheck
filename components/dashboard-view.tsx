@@ -4,8 +4,10 @@ import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {fetchWithCache, prefetchDashboardData, setCache} from "@/lib/core/frontend-cache";
 import {prefetchGroupData} from "@/lib/core/group-frontend-cache";
 import Link from "next/link";
+import {useSearchParams} from "next/navigation";
 import {
   Activity,
+  ChevronRight,
   ChevronDown,
   ExternalLink,
   Github,
@@ -216,6 +218,7 @@ function GroupPanel({
   dragHandleProps,
 }: GroupPanelProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const searchParams = useSearchParams();
 
   const statusSummary = useMemo(() => {
     const counts = { operational: 0, degraded: 0, failed: 0, validation_failed: 0, maintenance: 0, error: 0 };
@@ -228,7 +231,22 @@ function GroupPanel({
     return counts;
   }, [group.timelines]);
 
-  const groupLink = `/group/${encodeURIComponent(group.groupName)}`;
+  const groupLink = useMemo(() => {
+    const path = `/group/${encodeURIComponent(group.groupName)}`;
+    const embeddedMode = searchParams.get("ui_mode") === "embedded";
+    if (!embeddedMode) {
+      return path;
+    }
+    const nextParams = new URLSearchParams();
+    for (const key of ["ui_mode", "theme", "src_host"]) {
+      const value = searchParams.get(key);
+      if (value) {
+        nextParams.set(key, value);
+      }
+    }
+    const query = nextParams.toString();
+    return query ? `${path}?${query}` : path;
+  }, [group.groupName, searchParams]);
 
   return (
     <Collapsible
@@ -308,7 +326,7 @@ function GroupPanel({
             className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-sm font-medium text-background transition-all hover:bg-foreground/90 sm:h-10 sm:w-auto sm:gap-2 sm:px-5 sm:hover:px-6"
         >
             <span className="hidden whitespace-nowrap sm:inline">详情</span>
-            <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+            <ChevronRight className="h-3.5 w-3.5 opacity-80" />
         </Link>
       </div>
 

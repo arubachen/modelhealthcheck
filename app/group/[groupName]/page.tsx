@@ -32,6 +32,18 @@ export default async function GroupPage({ params, searchParams }: GroupPageProps
   const decodedGroupName = decodeURIComponent(groupName);
   const query = searchParams ? await searchParams : {};
   const embeddedMode = query.ui_mode === "embedded";
+  const backParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (!value) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item) backParams.append(key, item);
+      }
+      continue;
+    }
+    backParams.set(key, value);
+  }
+  const backHref = backParams.toString() ? `/?${backParams.toString()}` : "/";
 
   const [availableGroups, adminSession] = await Promise.all([
     getAvailableGroups(),
@@ -46,7 +58,7 @@ export default async function GroupPage({ params, searchParams }: GroupPageProps
       <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-3 sm:gap-8 sm:px-6 lg:px-12">
         {!embeddedMode && (
           <Link
-            href="/"
+            href={backHref}
             className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border/40 bg-background/60 px-4 py-1.5 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border/80 hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
