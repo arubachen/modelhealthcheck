@@ -8,11 +8,17 @@ import {loadSiteSettings} from "@/lib/site-settings";
 
 const ESTIMATED_VERSION = `v${packageJson.version}`;
 
-export default async function Home() {
+type HomePageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function Home({searchParams}: HomePageProps) {
+  const params = searchParams ? await searchParams : {};
   const [siteSettings, adminSession] = await Promise.all([
     loadSiteSettings(),
     getAdminSession(),
   ]);
+  const embeddedMode = params.ui_mode === "embedded";
 
   return (
     <div className="py-8 md:py-16">
@@ -20,6 +26,7 @@ export default async function Home() {
         <DashboardBootstrap
           siteSettings={siteSettings}
           canForceRefresh={Boolean(adminSession)}
+          embeddedMode={embeddedMode}
         />
       </main>
       

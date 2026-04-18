@@ -54,6 +54,7 @@ interface DashboardViewProps {
   initialData: DashboardData;
   siteSettings: SiteSettings;
   canForceRefresh: boolean;
+  embeddedMode?: boolean;
 }
 
 /** 计算所有 Provider 中最近一次检查的时间戳（毫秒） */
@@ -340,6 +341,7 @@ export function DashboardView({
   initialData,
   siteSettings,
   canForceRefresh,
+  embeddedMode = false,
 }: DashboardViewProps) {
   const [data, setData] = useState(initialData);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -793,42 +795,66 @@ export function DashboardView({
        <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
        <CornerPlus className="fixed bottom-4 right-4 h-6 w-6 text-border md:bottom-8 md:right-8" />
 
-      <header className="relative z-10 mb-8 flex flex-col justify-between gap-6 sm:mb-12 sm:gap-8 lg:flex-row lg:items-end">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background sm:h-8 sm:w-8">
-              <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      <header
+        className={cn(
+          "relative z-10 flex flex-col justify-between gap-6 sm:gap-8 lg:flex-row",
+          embeddedMode ? "mb-6 lg:items-start" : "mb-8 sm:mb-12 lg:items-end"
+        )}
+      >
+        <div className={cn("space-y-4", embeddedMode ? "max-w-2xl" : undefined)}>
+          {!embeddedMode && (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background sm:h-8 sm:w-8">
+                <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground sm:text-sm">
+                {siteSettings.heroBadge}
+              </span>
+              <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
+              <Link
+                href="https://github.com/Arron196/modelhealthcheck"
+                target="_blank"
+                className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground sm:text-xs"
+              >
+                <Github className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span>GitHub</span>
+              </Link>
+              <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
+              <ThemeToggle />
             </div>
-             <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground sm:text-sm">
-               {siteSettings.heroBadge}
-             </span>
-            <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
-            <Link
-              href="https://github.com/Arron196/modelhealthcheck"
-              target="_blank"
-              className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground sm:text-xs"
-            >
-              <Github className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span>GitHub</span>
-            </Link>
-            <div className="h-3 w-[1px] bg-border/60 sm:h-4" />
-            <ThemeToggle />
-          </div>
-          
-          <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
-             {siteSettings.heroTitlePrimary} <br />
-             <span className="text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
+          )}
+
+          <h1
+            className={cn(
+              "max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl",
+              embeddedMode ? "max-w-xl text-2xl sm:text-4xl md:text-5xl" : undefined
+            )}
+          >
+            {siteSettings.heroTitlePrimary} <br />
+            <span className="text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
           </h1>
-          
-          <div className="flex max-w-lg flex-col gap-2 text-sm text-muted-foreground sm:text-base">
-             <p className="whitespace-pre-line leading-relaxed">{siteSettings.heroDescription}</p>
-           </div>
+
+          <div
+            className={cn(
+              "flex max-w-lg flex-col gap-2 text-sm text-muted-foreground sm:text-base",
+              embeddedMode ? "max-w-xl text-xs sm:text-sm" : undefined
+            )}
+          >
+            <p className="whitespace-pre-line leading-relaxed">{siteSettings.heroDescription}</p>
+          </div>
         </div>
 
-        <div className="flex flex-col items-start gap-3 sm:gap-4 lg:items-end">
+        <div
+          className={cn(
+            "flex items-start gap-3 sm:gap-4",
+            embeddedMode
+              ? "w-full flex-row flex-wrap lg:max-w-[44rem] lg:justify-end"
+              : "flex-col lg:items-end"
+          )}
+        >
            {/* Search Box - only show when multiple groups exist */}
            {hasMultipleGroups && (
-             <div className="relative w-full sm:w-64">
+             <div className={cn("relative", embeddedMode ? "w-full sm:w-72 lg:w-80" : "w-full sm:w-64")}>
                <input
                  type="text"
                  placeholder="搜索分组..."
@@ -854,7 +880,7 @@ export function DashboardView({
 
            {/* Tag Filter - only show when multiple groups and tags exist */}
            {hasMultipleGroups && allTags.length > 0 && (
-             <div className="flex flex-wrap items-center gap-2">
+             <div className={cn("flex flex-wrap items-center gap-2", embeddedMode ? "w-full lg:justify-end" : undefined)}>
                {allTags.map((tag) => {
                  const isSelected = selectedTags.includes(tag);
                  return (

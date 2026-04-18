@@ -13,9 +13,11 @@ const DEFAULT_PERIOD: AvailabilityPeriod = "7d";
 export function DashboardBootstrap({
   siteSettings,
   canForceRefresh,
+  embeddedMode = false,
 }: {
   siteSettings: SiteSettings;
   canForceRefresh: boolean;
+  embeddedMode?: boolean;
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -97,6 +99,7 @@ export function DashboardBootstrap({
       initialData={data}
       siteSettings={siteSettings}
       canForceRefresh={canForceRefresh}
+      embeddedMode={embeddedMode}
     />
   );
 }
