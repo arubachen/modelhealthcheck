@@ -25,7 +25,7 @@
 - **去掉上游的多节点数据库租约选主链路**：当前实现默认按**单进程后台轮询**运行，不再保留上游文档中的数据库 lease 选主机制。
 - **弱化对 Supabase 的强依赖**：上游以 Supabase / PostgreSQL 为主要运行前提；当前版本改为 Supabase、直连 Postgres、SQLite 三种后端均可运行，Supabase 不再是唯一默认答案。
 - **去掉“主要靠 SQL 运维”的使用方式**：上游公开文档更偏向通过 SQL 和迁移脚本管理配置；当前版本把主要运维入口转为后台管理界面，SQL 更适合作为初始化或底层维护手段。
-- **调整 Docker Compose 使用模型**：当前仓库默认改为拉取 `ghcr.io/arron196/modelhealthcheck` 镜像运行，同时保留 `docker-compose.build.yml` 作为本地源码构建覆盖层。
+- **调整 Docker Compose 使用模型**：当前仓库默认改为拉取 `ghcr.io/arubachen/modelhealthcheck` 镜像运行，同时保留 `docker-compose.build.yml` 作为本地源码构建覆盖层。
 
 ## 保留的核心能力
 
@@ -124,7 +124,7 @@ pnpm lint   # 代码检查
 
 ### Docker Compose
 
-仓库已自带三种 Compose 入口：默认镜像版 `docker-compose.yml`、本地源码构建覆盖文件 `docker-compose.build.yml`，以及一键拉起 `应用 + PostgreSQL` 的 `docker-compose.postgres.yml`。默认 Compose 会直接拉取 `ghcr.io/arron196/modelhealthcheck:latest`（也可通过 `CHECK_CX_IMAGE` 覆盖），并把 SQLite 回退数据库持久化到命名卷 `check-cx-data`。当前 GitHub Actions 默认发布的是 `linux/amd64` 镜像；如果你在 ARM 主机上直接运行，优先使用自己的多架构 tag，或改用本地 build 覆盖方式。
+仓库已自带三种 Compose 入口：默认镜像版 `docker-compose.yml`、本地源码构建覆盖文件 `docker-compose.build.yml`，以及一键拉起 `应用 + PostgreSQL` 的 `docker-compose.postgres.yml`。默认 Compose 会直接拉取 `ghcr.io/arubachen/modelhealthcheck:latest`（也可通过 `CHECK_CX_IMAGE` 覆盖），并把 SQLite 回退数据库持久化到命名卷 `check-cx-data`。当前 GitHub Actions 默认发布的是 `linux/amd64` 镜像；如果你在 ARM 主机上直接运行，优先使用自己的多架构 tag，或改用本地 build 覆盖方式。
 
 #### 直接拉取 GHCR 镜像（默认：env 可为空，自动回退 SQLite）
 

@@ -134,7 +134,7 @@ SQLite 与直连 Postgres 一样，首次访问会自动初始化控制面表与
 ### 4.2 Docker Compose
 
 - 仓库根目录提供默认镜像版 `docker-compose.yml`、一键拉起 `应用 + PostgreSQL` 的 `docker-compose.postgres.yml`，以及本地源码构建覆盖文件 `docker-compose.build.yml`
-- 默认 `docker compose up -d` 会拉取 `ghcr.io/arron196/modelhealthcheck:latest`（也可通过 `CHECK_CX_IMAGE` 覆盖）
+- 默认 `docker compose up -d` 会拉取 `ghcr.io/arubachen/modelhealthcheck:latest`（也可通过 `CHECK_CX_IMAGE` 覆盖）
 - `docker compose -f docker-compose.postgres.yml up -d` 同样默认拉取 GHCR 镜像，但会额外创建一个本地 PostgreSQL 16 容器，并把应用固定到直连 Postgres
 - 如果你要本地构建当前仓库，请显式叠加 `docker-compose.build.yml`
 - 当前 GitHub Actions 默认发布的是 `linux/amd64` 镜像；ARM 主机如需直接运行 GHCR 镜像，请改用自建多架构 tag 或本地构建覆盖
@@ -251,4 +251,3 @@ VALUES ('OpenAI GPT-4o', 'openai', 'gpt-4o-mini', 'https://api.openai.com/v1/cha
 - 确认使用仓库自带的 `docker-compose.yml`，且本地构建场景额外叠加的是 `docker-compose.build.yml`
 - 不要移除 `check-cx-data` 命名卷
 - 如自定义 `SQLITE_DATABASE_PATH`，请同步调整卷挂载目录
-
