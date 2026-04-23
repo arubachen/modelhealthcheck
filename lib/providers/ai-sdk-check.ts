@@ -414,7 +414,16 @@ async function checkOpenAIImageModelCatalog(
 export async function verifyOpenAIImageGeneration(
   config: ProviderConfig,
   options?: CheckWithAiSdkOptions
-): Promise<CheckResult> {
+): Promise<{
+  result: CheckResult;
+  preview:
+    | {
+        base64: string;
+        uint8Array: Uint8Array;
+        mediaType: string;
+      }
+    | null;
+}> {
   const endpoint = normalizeProviderEndpoint(
     config.type,
     config.endpoint?.trim() || DEFAULT_ENDPOINTS[config.type]
@@ -462,12 +471,15 @@ export async function verifyOpenAIImageGeneration(
     const hasImage = Array.isArray(result.images) && result.images.length > 0;
 
     if (!hasImage) {
-      return buildCheckResult(
-        params,
-        "failed",
-        latencyMs,
-        buildManualImageVerificationMessage("真实出图验证未返回图片")
-      );
+      return {
+        result: buildCheckResult(
+          params,
+          "failed",
+          latencyMs,
+          buildManualImageVerificationMessage("真实出图验证未返回图片")
+        ),
+        preview: null,
+      };
     }
 
     const status: HealthStatus = latencyMs <= DEGRADED_THRESHOLD_MS ? "operational" : "degraded";
@@ -476,18 +488,28 @@ export async function verifyOpenAIImageGeneration(
         ? buildManualImageVerificationMessage(`真实出图验证通过，但耗时较高（${latencyMs}ms）`)
         : buildManualImageVerificationMessage(`真实出图验证通过（${latencyMs}ms）`);
 
-    return buildCheckResult(params, status, latencyMs, message);
+    return {
+      result: buildCheckResult(params, status, latencyMs, message),
+      preview: {
+        base64: result.image.base64,
+        uint8Array: result.image.uint8Array,
+        mediaType: result.image.mediaType,
+      },
+    };
   } catch (error) {
     throwIfAbortShouldPropagate(options, error);
 
     const params = await buildParams();
-    return buildCheckResult(
-      params,
-      "error",
-      null,
-      buildManualImageVerificationMessage(getErrorMessage(error as AIApiCallError)),
-      getSanitizedErrorDetail(error)
-    );
+    return {
+      result: buildCheckResult(
+        params,
+        "error",
+        null,
+        buildManualImageVerificationMessage(getErrorMessage(error as AIApiCallError)),
+        getSanitizedErrorDetail(error)
+      ),
+      preview: null,
+    };
   }
 }
 

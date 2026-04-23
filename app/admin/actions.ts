@@ -42,6 +42,7 @@ import {
 import {getControlPlaneStorage, resetStorageResolverCaches} from "@/lib/storage/resolver";
 import {createSupabaseControlPlaneStorage} from "@/lib/storage/supabase";
 import {ensureRuntimeMigrations, invalidateRuntimeMigrationCache} from "@/lib/supabase/runtime-migrations";
+import {saveManualImageVerificationPreview} from "@/lib/manual-image-verifications";
 import {normalizeProviderEndpoint} from "@/lib/providers/endpoint-utils";
 import {
   MANUAL_IMAGE_VERIFY_COOLDOWN_MS,
@@ -688,14 +689,21 @@ export async function verifyImageConfigAction(formData: FormData): Promise<never
       }
     }
 
-    const result = await verifyOpenAIImageGeneration(config);
-    await historySnapshotStore.append([result]);
+    const verification = await verifyOpenAIImageGeneration(config);
+    if (verification.preview) {
+      await saveManualImageVerificationPreview({
+        configId: config.id,
+        uint8Array: verification.preview.uint8Array,
+        mediaType: verification.preview.mediaType,
+      });
+    }
+    await historySnapshotStore.append([verification.result]);
 
-    if (result.status === "operational" || result.status === "degraded") {
+    if (verification.result.status === "operational" || verification.result.status === "degraded") {
       return;
     }
 
-    throw new Error(result.message || "真实出图验证失败");
+    throw new Error(verification.result.message || "真实出图验证失败");
   });
 }
 

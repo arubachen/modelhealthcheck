@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {Button} from "@/components/ui/button";
 import {
   AdminCheckbox,
@@ -11,8 +12,15 @@ import {
 } from "@/components/admin/admin-primitives";
 import {deleteConfigAction, upsertConfigAction, verifyImageConfigAction} from "@/app/admin/actions";
 import {requireAdminSession} from "@/lib/admin/auth";
+import {historySnapshotStore} from "@/lib/database/history";
+import {getManualImageVerificationPreviewUrl} from "@/lib/manual-image-verifications";
 import {ADMIN_PROVIDER_TYPES, loadAdminManagementData} from "@/lib/admin/data";
-import {MANUAL_IMAGE_VERIFY_COOLDOWN_MS, isOpenAIImageGenerationModel} from "@/lib/providers/image-models";
+import {
+  MANUAL_IMAGE_VERIFY_COOLDOWN_MS,
+  isManualImageVerificationMessage,
+  isOpenAIImageGenerationModel,
+  stripManualImageVerificationMessagePrefix,
+} from "@/lib/providers/image-models";
 import {formatAdminTimestamp, formatJson, getAdminFeedback} from "@/lib/admin/view";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +37,46 @@ export default async function AdminConfigsPage({searchParams}: AdminConfigsPageP
   ]);
   const feedback = getAdminFeedback(params);
   const manualImageVerifyCooldownMinutes = Math.ceil(MANUAL_IMAGE_VERIFY_COOLDOWN_MS / 60000);
+  const imageConfigIds = configs
+    .filter((config) => isOpenAIImageGenerationModel(config.model, config.type))
+    .map((config) => config.id);
+
+  const imageVerificationHistory =
+    imageConfigIds.length > 0
+      ? await historySnapshotStore.fetch({
+          allowedIds: imageConfigIds,
+          limitPerConfig: 20,
+        })
+      : {};
+
+  const imageVerificationSummaries = new Map(
+    await Promise.all(
+      imageConfigIds.map(async (configId) => {
+        const latestManualVerification = imageVerificationHistory[configId]?.find((item) =>
+          isManualImageVerificationMessage(item.message)
+        );
+
+        if (!latestManualVerification) {
+          return [configId, null] as const;
+        }
+
+        const previewUrl = await getManualImageVerificationPreviewUrl(
+          configId,
+          latestManualVerification.checkedAt
+        );
+
+        return [
+          configId,
+          {
+            checkedAt: latestManualVerification.checkedAt,
+            status: latestManualVerification.status,
+            message: stripManualImageVerificationMessagePrefix(latestManualVerification.message),
+            previewUrl,
+          },
+        ] as const;
+      })
+    )
+  );
 
   return (
     <div className="space-y-6">
@@ -201,6 +249,53 @@ export default async function AdminConfigsPage({searchParams}: AdminConfigsPageP
                           </Button>
                         </form>
                       </div>
+
+                      {imageVerificationSummaries.get(config.id) ? (
+                        <div className="mt-4 rounded-2xl border border-sky-500/15 bg-background/80 p-4 text-foreground dark:bg-background/20">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                              最近一次手动验证
+                            </span>
+                            <span className="rounded-full border border-border/40 bg-background px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                              {imageVerificationSummaries.get(config.id)?.status}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatAdminTimestamp(imageVerificationSummaries.get(config.id)?.checkedAt)}
+                            </span>
+                          </div>
+
+                          <p className="mt-2 text-sm text-foreground/80">
+                            {imageVerificationSummaries.get(config.id)?.message}
+                          </p>
+
+                          {imageVerificationSummaries.get(config.id)?.previewUrl ? (
+                            <div className="mt-4 space-y-3">
+                              <Image
+                                src={imageVerificationSummaries.get(config.id)?.previewUrl ?? ""}
+                                alt={`${config.name} 最近一次手动验证预览图`}
+                                width={512}
+                                height={512}
+                                unoptimized
+                                className="max-h-52 w-auto rounded-2xl border border-border/40 bg-white object-contain shadow-sm"
+                              />
+                              <div>
+                                <a
+                                  href={imageVerificationSummaries.get(config.id)?.previewUrl ?? undefined}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs font-medium text-sky-700 underline underline-offset-4 hover:text-sky-800 dark:text-sky-300 dark:hover:text-sky-200"
+                                >
+                                  查看原图
+                                </a>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-2xl border border-dashed border-sky-500/20 bg-background/70 px-4 py-3 text-xs text-sky-800/80 dark:bg-background/10 dark:text-sky-100/80">
+                          还没有手动真实出图结果。点击“手动验证出图”后，这里会显示最近一次验证时间、状态和预览图。
+                        </div>
+                      )}
                     </div>
                   ) : null}
 

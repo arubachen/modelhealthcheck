@@ -36,3 +36,19 @@ export function getManualImageVerificationPrompt(modelId: string): string {
 export function buildManualImageVerificationMessage(message: string): string {
   return `${MANUAL_IMAGE_VERIFY_MESSAGE_PREFIX} ${message}`;
 }
+
+export function isManualImageVerificationMessage(message: string | null | undefined): boolean {
+  return typeof message === "string" && message.startsWith(MANUAL_IMAGE_VERIFY_MESSAGE_PREFIX);
+}
+
+export function stripManualImageVerificationMessagePrefix(
+  message: string | null | undefined
+): string {
+  if (!message) {
+    return "";
+  }
+
+  return isManualImageVerificationMessage(message)
+    ? message.slice(MANUAL_IMAGE_VERIFY_MESSAGE_PREFIX.length).trim()
+    : message;
+}
