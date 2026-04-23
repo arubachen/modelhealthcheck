@@ -21,8 +21,10 @@ import {invalidateDashboardCache} from "@/lib/core/dashboard-data";
 import {clearPingCache} from "@/lib/core/global-state";
 import {invalidateGroupDashboardCache} from "@/lib/core/group-data";
 import {invalidateAvailabilityCache} from "@/lib/database/availability";
-import {invalidateConfigCache} from "@/lib/database/config-loader";
+import {historySnapshotStore} from "@/lib/database/history";
+import {invalidateConfigCache, loadProviderConfigsFromDB} from "@/lib/database/config-loader";
 import {invalidateGroupInfoCache} from "@/lib/database/group-info";
+import {verifyOpenAIImageGeneration} from "@/lib/providers/ai-sdk-check";
 import {invalidateSiteSettingsCache} from "@/lib/site-settings";
 import {
   deleteManagedSiteIconByUrl,
@@ -41,6 +43,11 @@ import {getControlPlaneStorage, resetStorageResolverCaches} from "@/lib/storage/
 import {createSupabaseControlPlaneStorage} from "@/lib/storage/supabase";
 import {ensureRuntimeMigrations, invalidateRuntimeMigrationCache} from "@/lib/supabase/runtime-migrations";
 import {normalizeProviderEndpoint} from "@/lib/providers/endpoint-utils";
+import {
+  MANUAL_IMAGE_VERIFY_COOLDOWN_MS,
+  MANUAL_IMAGE_VERIFY_MESSAGE_PREFIX,
+  isOpenAIImageGenerationModel,
+} from "@/lib/providers/image-models";
 import {getErrorMessage, logError} from "@/lib/utils";
 import {DEFAULT_SITE_SETTINGS, SITE_SETTINGS_SINGLETON_KEY} from "@/lib/types/site-settings";
 
@@ -641,6 +648,54 @@ export async function deleteConfigAction(formData: FormData): Promise<never> {
 
     const storage = await getControlPlaneStorage();
     await storage.checkConfigs.delete(id);
+  });
+}
+
+export async function verifyImageConfigAction(formData: FormData): Promise<never> {
+  return handleAction(formData, "verifyImageConfig", "图片模型验证已执行", async () => {
+    const id = getText(formData, "id");
+    if (!id) {
+      throw new Error("缺少配置 ID");
+    }
+
+    const configs = await loadProviderConfigsFromDB({forceRefresh: true});
+    const config = configs.find((item) => item.id === id);
+    if (!config) {
+      throw new Error("未找到对应的检测配置");
+    }
+
+    if (!isOpenAIImageGenerationModel(config.model, config.type)) {
+      throw new Error("当前配置不是 OpenAI 图片模型，无需执行真实出图验证");
+    }
+
+    const history = await historySnapshotStore.fetch({
+      allowedIds: [id],
+      limitPerConfig: 12,
+    });
+    const recentManualVerification = history[id]?.find((item) =>
+      item.message.startsWith(MANUAL_IMAGE_VERIFY_MESSAGE_PREFIX)
+    );
+    if (recentManualVerification) {
+      const lastCheckedAt = new Date(recentManualVerification.checkedAt).getTime();
+      if (
+        Number.isFinite(lastCheckedAt) &&
+        Date.now() - lastCheckedAt < MANUAL_IMAGE_VERIFY_COOLDOWN_MS
+      ) {
+        const remainingMinutes = Math.ceil(
+          (MANUAL_IMAGE_VERIFY_COOLDOWN_MS - (Date.now() - lastCheckedAt)) / 60000
+        );
+        throw new Error(`真实出图验证冷却中，请约 ${remainingMinutes} 分钟后再试`);
+      }
+    }
+
+    const result = await verifyOpenAIImageGeneration(config);
+    await historySnapshotStore.append([result]);
+
+    if (result.status === "operational" || result.status === "degraded") {
+      return;
+    }
+
+    throw new Error(result.message || "真实出图验证失败");
   });
 }
 

@@ -9,9 +9,10 @@ import {
   AdminStatusBanner,
   AdminTextarea,
 } from "@/components/admin/admin-primitives";
-import {deleteConfigAction, upsertConfigAction} from "@/app/admin/actions";
+import {deleteConfigAction, upsertConfigAction, verifyImageConfigAction} from "@/app/admin/actions";
 import {requireAdminSession} from "@/lib/admin/auth";
 import {ADMIN_PROVIDER_TYPES, loadAdminManagementData} from "@/lib/admin/data";
+import {MANUAL_IMAGE_VERIFY_COOLDOWN_MS, isOpenAIImageGenerationModel} from "@/lib/providers/image-models";
 import {formatAdminTimestamp, formatJson, getAdminFeedback} from "@/lib/admin/view";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function AdminConfigsPage({searchParams}: AdminConfigsPageP
     searchParams,
   ]);
   const feedback = getAdminFeedback(params);
+  const manualImageVerifyCooldownMinutes = Math.ceil(MANUAL_IMAGE_VERIFY_COOLDOWN_MS / 60000);
 
   return (
     <div className="space-y-6">
@@ -181,6 +183,26 @@ export default async function AdminConfigsPage({searchParams}: AdminConfigsPageP
                       </Button>
                     </form>
                   </div>
+
+                  {isOpenAIImageGenerationModel(config.model, config.type) ? (
+                    <div className="mb-4 rounded-2xl border border-sky-500/15 bg-sky-500/5 px-4 py-3 text-sm text-sky-900 dark:text-sky-100">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="font-medium">图片模型默认仅做非计费基础健康检查</div>
+                          <div className="text-xs text-sky-700/90 dark:text-sky-200/80">
+                            真实出图验证只在你手动触发时执行；为避免频繁扣费，同一配置每 {manualImageVerifyCooldownMinutes} 分钟最多触发一次，且使用最简单的低质量提示词。
+                          </div>
+                        </div>
+                        <form action={verifyImageConfigAction}>
+                          <input type="hidden" name="id" value={config.id} />
+                          <input type="hidden" name="returnTo" value="/admin/configs" />
+                          <Button type="submit" variant="outline" className="rounded-full border-sky-500/30 text-sky-700 hover:bg-sky-500/10 dark:text-sky-200">
+                            手动验证出图
+                          </Button>
+                        </form>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <form action={upsertConfigAction} className="space-y-4">
                     <input type="hidden" name="id" value={config.id} />

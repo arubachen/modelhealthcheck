@@ -18,7 +18,7 @@
  * - 端点 Ping 延迟测量
  */
 
-import { streamText } from "ai";
+import { experimental_generateImage as generateImage, streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
@@ -29,6 +29,12 @@ import { DEFAULT_ENDPOINTS } from "../types";
 import { getSanitizedErrorDetail } from "../utils";
 import { normalizeProviderEndpoint } from "./endpoint-utils";
 import { generateChallenge, validateResponse } from "./challenge";
+import {
+  buildManualImageVerificationMessage,
+  getManualImageVerificationPrompt,
+  isOpenAIImageGenerationModel,
+  stripOpenAICompatModelPrefix,
+} from "./image-models";
 import { measureEndpointPing } from "./endpoint-ping";
 
 /* ============================================================================
@@ -307,6 +313,190 @@ function createCustomFetch(
   };
 }
 
+function buildRequestHeaders(config: ProviderConfig): Record<string, string> {
+  return {
+    "User-Agent": "check-cx/0.1.0",
+    ...config.requestHeaders,
+  };
+}
+
+function buildAuthorizedHeaders(headers: Record<string, string>, apiKey: string): Headers {
+  const mergedHeaders = new Headers(headers);
+  if (
+    !mergedHeaders.has("Authorization") &&
+    !mergedHeaders.has("authorization") &&
+    !mergedHeaders.has("x-api-key") &&
+    !mergedHeaders.has("x-goog-api-key")
+  ) {
+    mergedHeaders.set("Authorization", `Bearer ${apiKey}`);
+  }
+  return mergedHeaders;
+}
+
+async function checkOpenAIImageModelCatalog(
+  config: ProviderConfig,
+  options?: CheckWithAiSdkOptions
+): Promise<CheckResult> {
+  const endpoint = normalizeProviderEndpoint(
+    config.type,
+    config.endpoint?.trim() || DEFAULT_ENDPOINTS[config.type]
+  );
+  const displayEndpoint = config.endpoint || DEFAULT_ENDPOINTS[config.type];
+  const pingPromise = measureEndpointPing(displayEndpoint);
+  const startedAt = Date.now();
+  const modelId = stripOpenAICompatModelPrefix(config.model);
+  const baseURL = deriveBaseURL(endpoint).replace(/\/$/, "");
+  const modelsUrl = mergeEndpointQueryParams(`${baseURL}/models`, endpoint);
+  const headers = buildAuthorizedHeaders(buildRequestHeaders(config), config.apiKey);
+
+  const buildParams = async (): Promise<ResultBuilderParams> => ({
+    config,
+    endpoint: displayEndpoint,
+    pingLatencyMs: await pingPromise,
+  });
+
+  try {
+    const response = await fetch(modelsUrl, {
+      method: "GET",
+      headers,
+      signal: options?.abortSignal,
+    });
+
+    const latencyMs = Date.now() - startedAt;
+    const params = await buildParams();
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      return buildCheckResult(
+        params,
+        "error",
+        latencyMs,
+        body ? `[${response.status}] ${body.slice(0, 200)}` : `HTTP ${response.status}`
+      );
+    }
+
+    const payload = (await response.json().catch(() => null)) as
+      | { data?: Array<{ id?: string; name?: string; display_name?: string }> }
+      | null;
+
+    const models = Array.isArray(payload?.data) ? payload.data : [];
+    const found = models.some((item) => {
+      const candidates = [item?.id, item?.name, item?.display_name]
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        .map((value) => stripOpenAICompatModelPrefix(value));
+      return candidates.includes(modelId);
+    });
+
+    if (!found) {
+      return buildCheckResult(
+        params,
+        "failed",
+        latencyMs,
+        `模型目录中未找到 ${modelId}`
+      );
+    }
+
+    const status: HealthStatus = latencyMs <= DEGRADED_THRESHOLD_MS ? "operational" : "degraded";
+    const message =
+      status === "degraded"
+        ? `模型目录可见，但模型元数据响应较慢（${latencyMs}ms）`
+        : `模型目录可见（${latencyMs}ms）`;
+
+    return buildCheckResult(params, status, latencyMs, message);
+  } catch (error) {
+    throwIfAbortShouldPropagate(options, error);
+
+    const params = await buildParams();
+    return buildCheckResult(
+      params,
+      "error",
+      null,
+      getErrorMessage(error as AIApiCallError),
+      getSanitizedErrorDetail(error)
+    );
+  }
+}
+
+export async function verifyOpenAIImageGeneration(
+  config: ProviderConfig,
+  options?: CheckWithAiSdkOptions
+): Promise<CheckResult> {
+  const endpoint = normalizeProviderEndpoint(
+    config.type,
+    config.endpoint?.trim() || DEFAULT_ENDPOINTS[config.type]
+  );
+  const displayEndpoint = config.endpoint || DEFAULT_ENDPOINTS[config.type];
+  const pingPromise = measureEndpointPing(displayEndpoint);
+  const startedAt = Date.now();
+  const { modelId } = parseModelDirective(stripOpenAICompatModelPrefix(config.model));
+  const baseURL = deriveBaseURL(endpoint);
+  const customFetch = createCustomFetch(
+    endpoint,
+    filterMetadata(config.metadata),
+    buildRequestHeaders(config)
+  );
+  const provider = createOpenAI({
+    apiKey: config.apiKey,
+    baseURL,
+    fetch: customFetch,
+  });
+
+  const buildParams = async (): Promise<ResultBuilderParams> => ({
+    config,
+    endpoint: displayEndpoint,
+    pingLatencyMs: await pingPromise,
+  });
+
+  try {
+    const result = await generateImage({
+      model: provider.image(modelId),
+      prompt: getManualImageVerificationPrompt(modelId),
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {
+        openai: {
+          quality: "low",
+          background: "opaque",
+        },
+      },
+      maxRetries: 0,
+      abortSignal: options?.abortSignal,
+    });
+
+    const latencyMs = Date.now() - startedAt;
+    const params = await buildParams();
+    const hasImage = Array.isArray(result.images) && result.images.length > 0;
+
+    if (!hasImage) {
+      return buildCheckResult(
+        params,
+        "failed",
+        latencyMs,
+        buildManualImageVerificationMessage("真实出图验证未返回图片")
+      );
+    }
+
+    const status: HealthStatus = latencyMs <= DEGRADED_THRESHOLD_MS ? "operational" : "degraded";
+    const message =
+      status === "degraded"
+        ? buildManualImageVerificationMessage(`真实出图验证通过，但耗时较高（${latencyMs}ms）`)
+        : buildManualImageVerificationMessage(`真实出图验证通过（${latencyMs}ms）`);
+
+    return buildCheckResult(params, status, latencyMs, message);
+  } catch (error) {
+    throwIfAbortShouldPropagate(options, error);
+
+    const params = await buildParams();
+    return buildCheckResult(
+      params,
+      "error",
+      null,
+      buildManualImageVerificationMessage(getErrorMessage(error as AIApiCallError)),
+      getSanitizedErrorDetail(error)
+    );
+  }
+}
+
 /* ============================================================================
  * SDK 模型实例创建
  * ============================================================================ */
@@ -331,10 +521,7 @@ function createModel(config: ProviderConfig) {
   const { modelId, reasoningEffort } = parseModelDirective(config.model);
 
   // 构建自定义 fetch（注入 headers 和 metadata）
-  const headers: Record<string, string> = {
-    "User-Agent": "check-cx/0.1.0",
-    ...config.requestHeaders,
-  };
+  const headers: Record<string, string> = buildRequestHeaders(config);
   const customFetch = createCustomFetch(endpoint, filterMetadata(config.metadata), headers);
 
   switch (config.type) {
@@ -542,6 +729,10 @@ export async function checkWithAiSdk(
     endpoint: displayEndpoint,
     pingLatencyMs: await pingPromise,
   });
+
+  if (config.type === "openai" && isOpenAIImageGenerationModel(config.model, config.type)) {
+    return checkOpenAIImageModelCatalog(config, options);
+  }
 
   if (options?.abortSignal) {
     const externalSignal = options.abortSignal;
