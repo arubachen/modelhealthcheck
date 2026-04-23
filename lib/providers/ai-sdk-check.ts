@@ -387,20 +387,14 @@ async function checkOpenAIImageModelCatalog(
       return candidates.includes(modelId);
     });
 
-    if (!found) {
-      return buildCheckResult(
-        params,
-        "failed",
-        latencyMs,
-        `模型目录中未找到 ${modelId}`
-      );
-    }
-
     const status: HealthStatus = latencyMs <= DEGRADED_THRESHOLD_MS ? "operational" : "degraded";
-    const message =
-      status === "degraded"
+    const message = found
+      ? status === "degraded"
         ? `模型目录可见，但模型元数据响应较慢（${latencyMs}ms）`
-        : `模型目录可见（${latencyMs}ms）`;
+        : `模型目录可见（${latencyMs}ms）`
+      : status === "degraded"
+        ? `基础接口可达，但 /v1/models 未列出 ${modelId}（${latencyMs}ms）；如需确认真实出图，请手动验证`
+        : `基础接口可达（${latencyMs}ms）；/v1/models 未列出 ${modelId}，如需确认真实出图，请手动验证`;
 
     return buildCheckResult(params, status, latencyMs, message);
   } catch (error) {
