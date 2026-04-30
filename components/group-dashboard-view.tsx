@@ -49,11 +49,11 @@ const PERIOD_OPTIONS: Array<{ value: AvailabilityPeriod; label: string }> = [
 
 /** Tech-style decorative corner plus marker */
 const CornerPlus = ({ className }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="1" 
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1"
     className={cn("absolute h-4 w-4 text-muted-foreground/40", className)}
   >
     <line x1="12" y1="0" x2="12" y2="24" />
@@ -233,9 +233,15 @@ export function GroupDashboardView({
   }, [providerTimelines]);
 
   return (
-    <div className="relative">
+    <div className="relative isolate">
       {!embeddedMode && (
         <>
+          <div className="pointer-events-none fixed inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary/30 to-primary/10 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+          </div>
+          <div className="pointer-events-none fixed inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
+            <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-primary/20 to-primary/5 opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+          </div>
           <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
           <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
           <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
@@ -256,13 +262,20 @@ export function GroupDashboardView({
                 <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
               <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground sm:text-sm">
-                Group View
+                分组页
               </span>
             </div>
           )}
-          
+
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+            <h1
+              className={cn(
+                "max-w-2xl font-extrabold leading-tight tracking-tight",
+                embeddedMode
+                  ? "text-3xl sm:text-5xl md:text-6xl"
+                  : "bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-4xl text-transparent sm:text-6xl md:text-7xl"
+              )}
+            >
               {displayName}
             </h1>
             <GroupTags tags={data.tags} />
@@ -271,13 +284,14 @@ export function GroupDashboardView({
                 href={data.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`打开 ${displayName} 官网`}
                 className="flex items-center justify-center rounded-full bg-muted/50 p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <ExternalLink className="h-6 w-6" />
               </a>
             )}
           </div>
-          
+
            <div className="flex flex-wrap items-center gap-2.5">
             {statusSummary.operational > 0 && (
                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
@@ -348,7 +362,7 @@ export function GroupDashboardView({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
               </span>
-              <span className="text-xs font-semibold uppercase tracking-wider">Operational</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">在线</span>
            </div>
 
            {embeddedMode && (

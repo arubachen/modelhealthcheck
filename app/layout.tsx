@@ -22,22 +22,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const themeBootScript = `(()=>{
-  const root = document.documentElement;
-  const params = new URLSearchParams(window.location.search);
-  const embeddedTheme = params.get('ui_mode') === 'embedded' ? params.get('theme') : null;
-  if (embeddedTheme === 'dark' || embeddedTheme === 'light') {
-    const isDark = embeddedTheme === 'dark';
-    root.classList.toggle('dark', isDark);
-    root.style.colorScheme = isDark ? 'dark' : 'light';
-    return;
-  }
-  const hour = new Date().getHours();
-  const isDark = hour >= 19 || hour < 7;
-  root.classList.toggle('dark', isDark);
-  root.style.colorScheme = isDark ? 'dark' : 'light';
-})();`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,12 +29,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <head>
-        <script
-          id="theme-boot"
-          dangerouslySetInnerHTML={{ __html: themeBootScript }}
-        />
-      </head>
       <body className="antialiased">
         <NextTopLoader color="var(--foreground)" showSpinner={false} />
         <ThemeProvider

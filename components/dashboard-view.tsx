@@ -174,6 +174,7 @@ interface GroupPanelProps {
   gridColsClass: string;
   availabilityStats: AvailabilityStatsMap;
   selectedPeriod: AvailabilityPeriod;
+  embeddedMode?: boolean;
   defaultOpen?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
@@ -212,10 +213,12 @@ function GroupPanel({
   gridColsClass,
   availabilityStats,
   selectedPeriod,
+  embeddedMode = false,
   defaultOpen = false,
   dragHandleProps,
 }: GroupPanelProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const groupLink = `/group/${encodeURIComponent(group.groupName)}`;
 
   const statusSummary = useMemo(() => {
     const counts = { operational: 0, degraded: 0, failed: 0, validation_failed: 0, maintenance: 0, error: 0 };
@@ -259,6 +262,7 @@ function GroupPanel({
                   href={group.websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`打开 ${group.displayName} 官网`}
                   className="flex items-center justify-center rounded-full bg-muted/50 p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -300,7 +304,17 @@ function GroupPanel({
             </div>
           </div>
         </CollapsibleTrigger>
-        
+
+        {!embeddedMode && (
+          <Link
+            href={groupLink}
+            aria-label={`查看 ${group.displayName} 分组详情`}
+            className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground p-0 text-sm font-medium text-background transition-all hover:bg-foreground/90 sm:h-10 sm:w-auto sm:gap-2 sm:px-5 sm:hover:px-6"
+          >
+            <span className="hidden whitespace-nowrap sm:inline">详情</span>
+            <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+          </Link>
+        )}
       </div>
 
       <CollapsibleContent className="animate-in fade-in-0 slide-in-from-top-2">
@@ -762,6 +776,7 @@ export function DashboardView({
           gridColsClass,
           availabilityStats,
           selectedPeriod,
+          embeddedMode,
           defaultOpen: embeddedMode,
         };
         // Only enable drag-and-drop in custom sort mode
@@ -779,10 +794,15 @@ export function DashboardView({
   );
 
   return (
-    <div className="relative">
+    <div className="relative isolate">
       {!embeddedMode && (
         <>
-          {/* Corner decorative markers for the main container */}
+          <div className="pointer-events-none fixed inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-primary/30 to-primary/10 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+          </div>
+          <div className="pointer-events-none fixed inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
+            <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-primary/20 to-primary/5 opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+          </div>
           <CornerPlus className="fixed left-4 top-4 h-6 w-6 text-border md:left-8 md:top-8" />
           <CornerPlus className="fixed right-4 top-4 h-6 w-6 text-border md:right-8 md:top-8" />
           <CornerPlus className="fixed bottom-4 left-4 h-6 w-6 text-border md:bottom-8 md:left-8" />
@@ -818,9 +838,14 @@ export function DashboardView({
               <ThemeToggle />
             </div>
 
-            <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
-              <span className="block">{siteSettings.heroTitlePrimary}</span>
-              <span className="block text-muted-foreground">{siteSettings.heroTitleSecondary}</span>
+            <h1 className="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl md:text-7xl">
+              <span className="bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                {siteSettings.heroTitlePrimary}
+              </span>{" "}
+              <br />
+              <span className="bg-gradient-to-r from-muted-foreground/80 to-muted-foreground/30 bg-clip-text text-transparent">
+                {siteSettings.heroTitleSecondary}
+              </span>
             </h1>
 
             <div className="flex max-w-lg flex-col gap-2 text-sm text-muted-foreground sm:text-base">
@@ -886,6 +911,7 @@ export function DashboardView({
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
+                    aria-label="清除分组搜索"
                     className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <X className="h-4 w-4" />
@@ -938,11 +964,19 @@ export function DashboardView({
               </div>
             </div>
 
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/50 backdrop-blur-sm">
+            <div
+              className={cn(
+                "inline-flex h-10 items-center justify-center rounded-full border border-border/60 bg-background/50 backdrop-blur-sm",
+                embeddedMode ? "w-10" : "gap-2 px-4"
+              )}
+            >
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
               </span>
+              {!embeddedMode && (
+                <span className="text-xs font-semibold uppercase tracking-wider">在线</span>
+              )}
             </div>
 
             {embeddedMode && (
